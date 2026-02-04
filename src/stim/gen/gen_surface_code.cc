@@ -137,9 +137,9 @@ GeneratedCircuit _finish_surface_code_circuit(
     // Build the start of the circuit, getting a state that's ready to cycle.
     // In particular, the first cycle has different detectors and so has to be handled special.
     Circuit head;
-    for (const auto &kv : q2p) {
-        head.safe_append_u("QUBIT_COORDS", {kv.first}, {kv.second.x, kv.second.y});
-    }
+    // for (const auto &kv : q2p) {
+    //     head.safe_append_u("QUBIT_COORDS", {kv.first}, {kv.second.x, kv.second.y});
+    // }
     params.append_reset(head, data_qubits, "ZX"[is_memory_x]);
     params.append_reset(head, measurement_qubits);
     head += cycle_actions;
@@ -274,11 +274,16 @@ GeneratedCircuit _generate_rotated_surface_code_circuit(const CircuitGenParamete
         {-1, -1},
     };
 
+    std::map<surface_coord, uint32_t> coord_to_index;
+    uint32_t index = 0;
+    for (const auto q : data_coords) coord_to_index[q] = index++;
+    for (const auto q : z_measure_coords) coord_to_index[q] = index++;
+    for (const auto q : x_measure_coords) coord_to_index[q] = index++;
+
     // Delegate.
     return _finish_surface_code_circuit(
         [&](surface_coord q) {
-            q = q - surface_coord{0, fmodf(q.x, 2)};
-            return (uint32_t)(q.x + q.y * (d + 0.5));
+            return coord_to_index[q];
         },
         data_coords,
         x_measure_coords,
